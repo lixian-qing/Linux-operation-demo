@@ -1,22 +1,15 @@
-
-g
+*.log
 *.bak
 *.tar
 *.gz
 *.zip
 *.sql
-
-# 密钥、密码配置
 ak.txt
 db_pass.conf
 env.ini
 secret.key
-
-# 虚拟机镜像、安装包
 *.iso
 *.vmx
 *.ova
-
-# 系统临时文件
 /tmp
-Cache/
+cache/

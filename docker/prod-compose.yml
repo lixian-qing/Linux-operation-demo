@@ -1,0 +1,28 @@
+version: "3"
+services:
+  nginx:
+    image: nginx:alpine
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL","curl -s 127.0.0.1:80 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: 10m
+        max-file: 3
+    ports:
+      - "8080:80"
+    volumes:
+      - ../nginx-conf:/etc/nginx/conf.d
+    networks:
+      ops-net:
+networks:
+  ops-net:
+    driver: bridge
