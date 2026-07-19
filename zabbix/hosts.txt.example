@@ -1,0 +1,7 @@
+# zabbix/hosts.txt.example
+# 批量部署 Zabbix Agent 的被控主机列表（每行一个 IP）
+# 使用：cp hosts.txt.example hosts.txt  然后填入真实 IP（hosts.txt 已被忽略）
+# 示例：
+192.168.1.101
+192.168.1.102
+192.168.1.103

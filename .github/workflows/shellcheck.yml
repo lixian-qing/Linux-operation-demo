@@ -1,0 +1,26 @@
+name: shellcheck
+
+on:
+  push:
+    paths:
+      - "scripts/**"
+      - "zabbix/**"
+      - ".github/workflows/**"
+  pull_request:
+    paths:
+      - "scripts/**"
+      - "zabbix/**"
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          severity: warning
+          # SC1090/1091: 无法 follow 动态 source(本项目各脚本 source common_func.sh)
+          # SC2154: 变量来自 common_func(日志/路径), 静态检查误报
+          # SC2034: 公共库变量被其它脚本使用
+          additional_args: "-e SC1090 -e SC1091 -e SC2154 -e SC2034"

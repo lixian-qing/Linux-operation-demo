@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>6.0</version>
+    <date>2024-08-15T12:00:00Z</date>
+    <groups>
+        <group>
+            <uuid>4f5b8b1c2a3e4d6f9c1a7b8c9d0e1f2a</uuid>
+            <name>Linux servers</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <uuid>a7c3e1d29b4a4c8eb5d61f2a3b4c5d6e</uuid>
+            <template>Linux Ops Custom</template>
+            <name>Linux Ops Custom</name>
+            <description>自定义 Linux 运维监控模板: CPU/内存/磁盘/核心端口存活&#13;导入: Configuration - Templates - Import</description>
+            <groups>
+                <group>
+                    <name>Linux servers</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <uuid>b1a2c3d4e5f6478190a1b2c3d4e5f6a7</uuid>
+                    <name>CPU 使用率</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>system.cpu.util[all,avg,avg1]</key>
+                    <value_type>NUMERIC_FLOAT</value_type>
+                    <units>%</units>
+                    <delay>1m</delay>
+                </item>
+                <item>
+                    <uuid>c2b3c4d5e6f7481920a2b3c4d5e6f7a8</uuid>
+                    <name>可用内存百分比</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>vm.memory.size[pavailable]</key>
+                    <value_type>NUMERIC_FLOAT</value_type>
+                    <units>%</units>
+                    <delay>1m</delay>
+                </item>
+                <item>
+                    <uuid>d3c4d5e6f784920a3b4c5d6e7f8a9b0c</uuid>
+                    <name>根分区使用率</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>vfs.fs.size[/,pused]</key>
+                    <value_type>NUMERIC_FLOAT</value_type>
+                    <units>%</units>
+                    <delay>5m</delay>
+                </item>
+                <item>
+                    <uuid>e4d5e6f7850a931b4c5d6e7f8a9b0c1d</uuid>
+                    <name>80 端口存活</name>
+                    <type>SIMPLE</type>
+                    <key>net.tcp.service[tcp,,80]</key>
+                    <value_type>NUMERIC_UNSIGNED</value_type>
+                    <delay>1m</delay>
+                </item>
+                <item>
+                    <uuid>f5e6f7860a941c5d6e7f8a9b0c1d2e3f</uuid>
+                    <name>3306 端口存活</name>
+                    <type>SIMPLE</type>
+                    <key>net.tcp.service[tcp,,3306]</key>
+                    <value_type>NUMERIC_UNSIGNED</value_type>
+                    <delay>1m</delay>
+                </item>
+                <item>
+                    <uuid>06f7870a951d6e7f8a9b0c1d2e3f4a5b</uuid>
+                    <name>系统启动时间</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>system.boottime</key>
+                    <value_type>NUMERIC_UNSIGNED</value_type>
+                    <units>unixtime</units>
+                    <delay>10m</delay>
+                </item>
+            </items>
+            <triggers>
+                <trigger>
+                    <uuid>1a2b3c4d5e6f478190a2b3c4d5e6f7a8</uuid>
+                    <name>CPU 使用率 &gt; 90% 持续5分钟</name>
+                    <expression>min(/Linux Ops Custom/system.cpu.util[all,avg,avg1],5m)&gt;90</expression>
+                    <priority>HIGH</priority>
+                    <manual_close>YES</manual_close>
+                </trigger>
+                <trigger>
+                    <uuid>2b3c4d5e6f748290a3b4c5d6e7f8a9b0</uuid>
+                    <name>可用内存 &lt; 15% 持续3分钟</name>
+                    <expression>max(/Linux Ops Custom/vm.memory.size[pavailable],3m)&lt;15</expression>
+                    <priority>WARNING</priority>
+                    <manual_close>YES</manual_close>
+                </trigger>
+                <trigger>
+                    <uuid>3c4d5e6f7483020a4c5d6e7f8a9b0c1d</uuid>
+                    <name>根分区使用率 &gt; 85%</name>
+                    <expression>last(/Linux Ops Custom/vfs.fs.size[/,pused])&gt;85</expression>
+                    <priority>WARNING</priority>
+                    <manual_close>YES</manual_close>
+                </trigger>
+                <trigger>
+                    <uuid>4d5e6f74840310a5d6e7f8a9b0c1d2e3</uuid>
+                    <name>根分区使用率 &gt; 95%</name>
+                    <expression>last(/Linux Ops Custom/vfs.fs.size[/,pused])&gt;95</expression>
+                    <priority>HIGH</priority>
+                    <manual_close>YES</manual_close>
+                </trigger>
+                <trigger>
+                    <uuid>5e6f748504120a6e7f8a9b0c1d2e3f4a</uuid>
+                    <name>Nginx(80) 端口不可达</name>
+                    <expression>last(/Linux Ops Custom/net.tcp.service[tcp,,80])=0</expression>
+                    <priority>HIGH</priority>
+                    <manual_close>YES</manual_close>
+                </trigger>
+                <trigger>
+                    <uuid>6f748605130a7f8a9b0c1d2e3f4a5b6c</uuid>
+                    <name>MySQL(3306) 端口不可达</name>
+                    <expression>last(/Linux Ops Custom/net.tcp.service[tcp,,3306])=0</expression>
+                    <priority>HIGH</priority>
+                    <manual_close>YES</manual_close>
+                </trigger>
+            </triggers>
+        </template>
+    </templates>
+</zabbix_export>

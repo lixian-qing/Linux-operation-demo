@@ -1,0 +1,7 @@
+region         = "cn-hangzhou"
+zone_id        = "cn-hangzhou-i"
+instance_type  = "ecs.t6-c1m1.large"
+instance_count = 1
+
+# 改成你自己的强密码 (8-30位, 含大小写字母/数字/特殊符号)
+ecs_password   = "ChangeMe_StrongPwd@2024"

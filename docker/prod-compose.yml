@@ -1,28 +1,92 @@
-version: "3"
+# 生产级 LNMP, 含资源限制/健康检测/日志轮转
+# 密码通过 .env 注入
+# 用法: cd docker && cp .env.example .env && docker compose -f prod-compose.yml up -d
+version: "3.8"
+
 services:
   nginx:
     image: nginx:alpine
+    container_name: prod-nginx
+    restart: always
     deploy:
       resources:
         limits:
           cpus: '0.5'
           memory: 256M
     healthcheck:
-      test: ["CMD-SHELL","curl -s 127.0.0.1:80 || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:80/ || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 3
     logging:
       driver: "json-file"
       options:
-        max-size: 10m
-        max-file: 3
+        max-size: "10m"
+        max-file: "3"
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
-      - ../nginx-conf:/etc/nginx/conf.d
+      - ../nginx-conf:/etc/nginx/conf.d:ro
+      - web-root:/usr/share/nginx/html:ro
     networks:
-      ops-net:
+      - ops-net
+
+  php:
+    image: php:8.1-fpm-alpine
+    container_name: prod-php
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -x php-fpm || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - web-root:/usr/share/nginx/html
+    networks:
+      - ops-net
+
+  mysql:
+    image: mysql:5.7
+    container_name: prod-mysql
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?在 .env 设置}
+      MYSQL_DATABASE: ${MYSQL_DB:-appdb}
+      TZ: Asia/Shanghai
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - ops-net
+
+volumes:
+  mysql-data:
+  web-root:
+
 networks:
   ops-net:
     driver: bridge

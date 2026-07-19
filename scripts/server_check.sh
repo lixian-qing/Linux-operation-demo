@@ -1,21 +1,53 @@
 #!/bin/bash
-LOG_FILE="./logs/check_$(date +%Y%m%d).log"
-mkdir -p ./logs
-echo "====================服务器巡检报告 $(date)====================" >> $LOG_FILE
-echo "【1.系统基础信息】" >> $LOG_FILE
-hostname
-uname -r
-cat /etc/centos-release
-echo -e "\n【2.CPU负载】" >> $LOG_FILE
-uptime
-echo -e "\n【3.内存使用】" >> $LOG_FILE
-free -h
-echo -e "\n【4.磁盘使用率】" >> $LOG_FILE
-df -h | grep -v tmpfs
-echo -e "\n【5.监听端口】" >> $LOG_FILE
-ss -ltnp
-echo -e "\n【6.当前登录用户】" >> $LOG_FILE
-who
-df -h | grep -v tmpfs | awk 'NR>1{gsub(/%/,"");if($5>=85)print "警告：分区",$1,"使用率高达"$5"%"}' >> $LOG_FILE
-echo "============================================================" >> $LOG_FILE
-echo "巡检完成，日志输出至 $LOG_FILE"
+# 服务器巡检, 采集系统/负载/内存/磁盘/端口/登录用户写日志
+# 磁盘超阈值告警
+# crontab: 0 */4 * * * /path/server_check.sh
+set -euo pipefail
+
+SCRIPT_NAME=server_check
+source "$(dirname "$0")/common_func.sh"
+must_root
+
+DISK_THRESHOLD=${1:-85}
+
+log_info "==================== 巡检报告 $(date) ===================="
+
+section() { log_info ""; log_info "【$1】"; }
+
+section "1.系统基础信息"
+{
+    echo "主机名: $(hostname)"
+    echo "内核:   $(uname -r)"
+    echo "系统:   $(cat /etc/redhat-release 2>/dev/null || awk -F= '/PRETTY_NAME/{gsub(/"/,"",$2);print $2}' /etc/os-release)"
+    echo "时间:   $(date '+%F %T %Z')"
+} >> "$LOG_FILE"
+
+section "2.负载"
+uptime >> "$LOG_FILE"
+
+section "3.内存"
+free -h >> "$LOG_FILE"
+
+section "4.磁盘"
+df -h | grep -v tmpfs >> "$LOG_FILE"
+
+section "5.监听端口"
+ss -ltnp >> "$LOG_FILE"
+
+section "6.登录用户"
+who >> "$LOG_FILE"
+
+log_info ""
+hit=0
+while read -r used mnt; do
+    [[ -z "$used" ]] && continue
+    if (( used >= DISK_THRESHOLD )); then
+        log_warn "磁盘告警: $mnt 使用率 ${used}% (阈值 ${DISK_THRESHOLD}%)"
+        hit=1
+    fi
+done < <(df -P | awk 'NR>1 && $1!~/tmpfs/{gsub(/%/,"",$5); print $5,$6}')
+
+(( hit )) && send_alert "磁盘空间告警" "详见 $LOG_FILE"
+
+log_info "============================================================"
+log_info "巡检完成 -> $LOG_FILE"

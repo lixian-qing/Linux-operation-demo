@@ -1,20 +1,61 @@
-version: "3"
+# LNMP 开发环境
+# 密码通过 .env 注入, 不硬编码
+# 用法: cd docker && cp .env.example .env && 填密码 && docker compose up -d
+# 注意: 容器内 Nginx 解析 PHP 需 fastcgi_pass 指向服务名 php:9000
+version: "3.8"
+
 services:
   nginx:
     image: nginx:alpine
+    container_name: ops-nginx
+    restart: unless-stopped
     ports:
       - "8080:80"
     volumes:
-      - ../nginx-conf:/etc/nginx/conf.d
+      - ../nginx-conf:/etc/nginx/conf.d:ro
+      - web-root:/usr/share/nginx/html:ro
     depends_on:
-      - php
+      php:
+        condition: service_healthy
+    networks:
+      - ops-net
+
   php:
-    image: php:fpm-alpine
+    image: php:8.1-fpm-alpine
+    container_name: ops-php
+    restart: unless-stopped
+    volumes:
+      - web-root:/usr/share/nginx/html
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -x php-fpm || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - ops-net
+
   mysql:
     image: mysql:5.7
+    container_name: ops-mysql
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?在 .env 设置}
+      MYSQL_DATABASE: ${MYSQL_DB:-appdb}
+      TZ: Asia/Shanghai
     volumes:
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ops-net
+
 volumes:
   mysql-data:
+  web-root:
+
+networks:
+  ops-net:
+    driver: bridge

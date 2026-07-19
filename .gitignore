@@ -1,15 +1,39 @@
+# 日志与备份产物
 *.log
+logs/
+data/
+
+# 备份压缩包与 SQL 导出
 *.bak
 *.tar
 *.gz
 *.zip
 *.sql
+
+# 敏感配置文件（禁止入库）
+.env
+.env.*
+!.env.example
 ak.txt
 db_pass.conf
 env.ini
 secret.key
+.my.cnf
+
+# 虚拟机镜像
 *.iso
 *.vmx
 *.ova
+
+# 临时与缓存
 /tmp
 cache/
+
+# Terraform 状态与凭据
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform.tfvars.example
+crash.log
+crash.*.log
